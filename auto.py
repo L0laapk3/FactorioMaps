@@ -358,22 +358,21 @@ def buildConfig(args: Namespace, tmpDir, basepath):
 def auto(*args):
 
 	lock = threading.Lock()
-	def kill(pid, onlyStall=False):
-		if pid:
-			with lock:
-				if not onlyStall and psutil.pid_exists(pid):
-
-					if os.name == 'nt':
-						subprocess.check_call(("taskkill", "/pid", str(pid)), stdout=subprocess.DEVNULL, shell=True)
-					else:
-						subprocess.check_call(("killall", "factorio"), stdout=subprocess.DEVNULL)	# TODO: kill correct process instead of just killing all
-
-					while psutil.pid_exists(pid):
-						time.sleep(0.1)
-
-					printErase("killed factorio")
-
-		#time.sleep(0.1)
+	def kill(pid):
+		with lock:
+			try:
+				print("killing factorio")
+				p = psutil.Process(pid)
+				# psutils terminate() and is_running() check creation time
+				# as well as PID, so this works correctly even if the pid
+				# we pass is already dead and its PID has been reused by
+				# an unrelated process.
+				p.terminate()
+				if p.is_running():
+					p.wait()
+				print("killed factorio")
+			except psutil.NoSuchProcess:
+				print("factorio is already dead, continuing")
 
 	parser = argparse.ArgumentParser(description="FactorioMaps")
 	daytime = parser.add_mutually_exclusive_group()
@@ -708,11 +707,9 @@ def auto(*args):
 						else:
 							startLogProcess.terminate()
 
-							# I have receieved a bug report from feidan in which he describes what seems like that this doesnt kill factorio?
-
-							onlyStall = isKilled[0]
-							isKilled[0] = True
-							kill(pid, onlyStall)
+							if not isKilled[0]:
+								isKilled[0] = True
+								kill(pid)
 
 							if savename == saveGames[-1] and daytimeIndex == len(daytimes) - 1:
 								refZoom()
@@ -871,19 +868,9 @@ def auto(*args):
 		copytree(Path(__file__, "..", "web", "lib").resolve(), os.path.join(workfolder, "lib"))
 
 
-
-	except KeyboardInterrupt:
-		print("keyboardinterrupt")
-		kill(pid)
-		raise
-
 	finally:
-
-		try:
+		if pid:
 			kill(pid)
-		except:
-			pass
-
 		changeModlist(args.mod_path, False)
 
 if __name__ == '__main__':
