@@ -544,13 +544,31 @@ if (Object.values(layers).some(s => Object.values(s).some(l => l.day)) && Object
 
 
 if (layersByTimestamp.length > 1 && true) {
-	let min = Math.min.apply(undefined, mapInfo.maps.map(l => parseInt(l.path)));
-	let max = Math.max.apply(undefined, mapInfo.maps.map(l => parseInt(l.path)));
-	let sliderHeight = Math.min(window.innerHeight * .8, Math.max(95, 45 * (layersByTimestamp.length - 1)));
+	// min/max hours; "1" and "1-1" both become 1
+	let minHours = Math.min.apply(undefined, mapInfo.maps.map(l => parseInt(l.path)));
+	let maxHours = Math.max.apply(undefined, mapInfo.maps.map(l => parseInt(l.path)));
+	// the tick times of each save
+	let allTicksSorted = mapInfo.maps.map(l => l.tick).sort((a, b) => a - b);
+	let minTicks = allTicksSorted[0];
+	let maxTicks = allTicksSorted[allTicksSorted.length - 1];
+	// number of handles on slider, and number of gaps in-between handles
+	let numHandles = layersByTimestamp.length;
+	let numGaps = numHandles - 1;
+	// sliderHeight in px
+	let sliderHeight = Math.min(window.innerHeight * .8, Math.max(95, 45 * numGaps));
+	// labels for slider
 	let timeLabels = layersByTimestamp.map(function(layer, i) {
+		let position;
+		let tick = mapInfo.maps[i].tick;
+		// if both saves are in the same hour, or height per handle is less than 30 pixels, evenly space sliders
+		if ((maxHours == minHours) || (sliderHeight / numHandles < 30)) {
+			position = allTicksSorted.indexOf(tick) / numGaps;
+		} else { // otherwise, space them based on how many ticks have passed
+			position = (tick - minTicks) / (maxTicks - minTicks)
+		}
 		return {
 			name: mapInfo.maps[i].path + "h",
-			position: max == min || layersByTimestamp.length * 30/sliderHeight > 1 ? i / (layersByTimestamp.length - 1) : i * 30/sliderHeight + (parseInt(mapInfo.maps[i].path) - min) / (max - min) * (1 - (layersByTimestamp.length - 1) * 30/sliderHeight),
+			position: position,
 			layers: Object.values(layer).map(s => ["day", "night"].map(n => s[n]).filter(l => l)).flat()
 		}
 	});
