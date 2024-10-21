@@ -26,11 +26,6 @@ script.on_event(defines.events.on_tick, function(event)
 
 	game.autosave_enabled = false
 
-	-- doesnt work lol
-	-- type = "EXPLOIT TO PREVENT THE USER FROM BEING ABLE TO SAVE AND FUCK UP THEIR SAVE."
-	-- global.something = "https://forums.factorio.com/viewtopic.php?f=48&t=67884"
-
-
 	if fm.autorun then
 		if not fm.done then
 
@@ -269,31 +264,61 @@ script.on_event(defines.events.on_tick, function(event)
 				end)
 			end
 		end
-	elseif settings.global["factoriomaps-show-startup-guide"].value then
-		-- usage instructions
+	else
+		if settings.global["factoriomaps-show-startup-guide"].value then
+			-- usage instructions
 
-		game.tick_paused = true
-		game.ticks_to_run = 0
+			game.tick_paused = true
+			game.ticks_to_run = 0
 
-		local main = player.gui.center.add{type = "frame", caption = "Welcome to FactorioMaps!", direction = "vertical"}
-		main.add{type = "label", caption = "Welcome to FactorioMaps!"}.style.single_line = false
-		main.add{type = "label", caption = "Using FactorioMaps requires you to keep periodic saves of your progress.\nBy default, FactorioMaps will create a save [font=default-bold]every 5 hours[/font].\nThis can be changed under [font=default-bold]Settings > Mod settings[/font]."}.style.single_line = false
-		main.add{type = "label", caption = "Thats all for now! When you're ready to render your web timelapse,\nhead over to [font=default-bold]https://git.io/factoriomaps[/font]."}.style.single_line = false
-		main.style.horizontal_align = "right"
+			local main = player.gui.center.add{type = "frame", caption = "Welcome to FactorioMaps!", direction = "vertical"}
+			main.add{type = "label", caption = "Welcome to FactorioMaps!"}.style.single_line = false
+			main.add{type = "label", caption = "Using FactorioMaps requires you to keep periodic saves of your progress.\nBy default, FactorioMaps will create a save [font=default-bold]every 5 hours[/font].\nThis can be changed under [font=default-bold]Settings > Mod settings[/font]."}.style.single_line = false
+			main.add{type = "label", caption = "Thats all for now! When you're ready to render your web timelapse,\nhead over to [font=default-bold]https://git.io/factoriomaps[/font]."}.style.single_line = false
+			main.style.horizontal_align = "right"
 
-		local buttonContainer = main.add{type = "flow", direction = "horizontal"}
-		local button = buttonContainer.add{type = "button", caption = "Ok!"}
-		buttonContainer.style.horizontally_stretchable = true
-		buttonContainer.style.horizontal_align = "right"
-		script.on_event(defines.events.on_gui_click, function(event)
+			local buttonContainer = main.add{type = "flow", direction = "horizontal"}
+			local button = buttonContainer.add{type = "button", caption = "Ok!"}
+			buttonContainer.style.horizontally_stretchable = true
+			buttonContainer.style.horizontal_align = "right"
+			script.on_event(defines.events.on_gui_click, function(event)
 
-			if event.element == button then
-				main.destroy()
-				game.tick_paused = false
-				settings.global["factoriomaps-show-startup-guide"] = {value = false}
+				if event.element == button then
+					main.destroy()
+					game.tick_paused = false
+					settings.global["factoriomaps-show-startup-guide"] = {value = false}
+				end
+
+			end)
+
+		end
+
+		if settings.global["factoriomaps-periodic-save-enable"].value then
+			local do_save = false
+			if global.last_save_tick == nil then
+				global.last_save_tick = game.tick
+				do_save = true
+			else
+				local next_save_tick = global.last_save_tick + settings.global["factoriomaps-periodic-save-frequency"].value * 60 * 60 * 60
+				if game.tick >= next_save_tick then
+					game.print(global.last_save_tick .. " " .. next_save_tick)
+					global.last_save_tick = next_save_tick
+					do_save = true
+				end
 			end
 
-		end)
+			if do_save then
+				if settings.global["factoriomaps-periodic-save-name"].value:find("%%TICK%%") == nil then
+					game.print("Factoriomaps: Period save name must contain %TICK%. Resetting to default.")
+					settings.global["factoriomaps-periodic-save-name"] = {value = "%SEED%-%TICK%"}
+				end
+				local save_name = settings.global["factoriomaps-periodic-save-name"].value
+				save_name = save_name:gsub("%%TICK%%", game.tick)
+				save_name = save_name:gsub("%%SEED%%", game.default_map_gen_settings.seed)
+				game.print("Factoriomaps: saving game as " .. save_name)
+				game.server_save(save_name)
+			end
+		end
 	end
 end)
 

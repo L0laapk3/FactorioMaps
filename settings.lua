@@ -9,7 +9,15 @@ data:extend({
         type = "double-setting",
         name = "factoriomaps-periodic-save-frequency",
         setting_type = "runtime-global",
-        default_value = 5,
+        default_value = 2.5,
+		minimum_value = 1 / 60,
+    },
+    {
+        type = "string-setting",
+        name = "factoriomaps-periodic-save-name",
+        setting_type = "runtime-global",
+        default_value = "%SEED%-%TICK%",
+		allow_blank = true,
     },
     {
         type = "bool-setting",
