@@ -1,5 +1,5 @@
 PyTurboJPEG>=1.1.5
 psutil>=5.4.8
 numpy>=1.16.4
-Pillow>=6.1.0
+Pillow>=9.3.0
 setuptools>=68.0.0
