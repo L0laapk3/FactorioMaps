@@ -37,6 +37,8 @@ end
 
 function fm.generateMap(data)
 
+	log("Start world capture")
+
 	local player = game.players[data.player_index]
 
 	local forces = {}

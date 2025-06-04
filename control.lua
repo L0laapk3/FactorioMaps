@@ -205,6 +205,8 @@ script.on_event(defines.events.on_tick, function(event)
 			end
 
 
+			fm.currentSurface.show_clouds = false
+
 
 			if fm.autorun.daytime == "day" then
 				fm.currentSurface.daytime = 0
