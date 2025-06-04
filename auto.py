@@ -40,7 +40,6 @@ from tempfile import TemporaryDirectory
 import threading
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from argparse import Namespace
 from shutil import copy, copytree
@@ -370,6 +369,7 @@ def buildConfig(args: Namespace, tmpDir, basepath):
     with configPath.open("w+", encoding="utf-8") as configFile:
         configFile.writelines(("; version=3\n", ))
         config.write(configFile, space_around_delimiters=False)
+        print(str(configPath))
 
     copy(Path(userFolder, 'player-data.json'), tmpDir)
 
