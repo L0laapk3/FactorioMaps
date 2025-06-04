@@ -22,8 +22,8 @@ try:
         raise ImportError from ex
 except ImportError as ex:
     traceback.print_exc()
-    print("\nDependencies not met. Run `pip install -r requirements.txt` to install missing dependencies.")
-    raise ex
+    print("\nERROR: Dependencies not met. Run `pip install -r requirements.txt` to install missing dependencies.")
+    sys.exit(1)
 
 import glob
 import argparse
