@@ -55,7 +55,7 @@ function fm.generateMap(data)
 	-- delete folder (if it already exists)
 	local basePath = fm.topfolder
 	local subPath = basePath .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime
-	game.remove_path(subPath)
+	helpers.remove_path(subPath)
 	subPath = subPath .. "/"
 
 
@@ -538,7 +538,7 @@ function fm.generateMap(data)
 			fm.autorun.chunkCache[fm.autorun.tick] = {}
 		end
 		fm.autorun.chunkCache[fm.autorun.tick][fm.currentSurface.name] = allGridString:sub(1, -2)
-		game.write_file(basePath .. "chunkCache.json", prettyjson(fm.autorun.chunkCache), false, data.player_index)
+		helpers.write_file(basePath .. "chunkCache.json", prettyjson(fm.autorun.chunkCache), false, data.player_index)
 	
 	end
 	fm.autorun.mapInfo.maps[mapIndex].surfaces[fm.currentSurface.name][fm.autorun.daytime] = true
@@ -639,7 +639,7 @@ function fm.generateMap(data)
 
 	
 	
-	game.write_file(basePath .. "mapInfo.json", json(fm.autorun.mapInfo), false, data.player_index)
-	game.write_file(subPath .. "crop.txt", "v2" .. cropText, false, data.player_index)
+	helpers.write_file(basePath .. "mapInfo.json", json(fm.autorun.mapInfo), false, data.player_index)
+	helpers.write_file(subPath .. "crop.txt", "v2" .. cropText, false, data.player_index)
 	
 end

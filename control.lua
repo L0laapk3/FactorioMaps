@@ -160,7 +160,7 @@ script.on_event(defines.events.on_tick, function(event)
 				local surface = game.surfaces[surfaceName]
 				latest = fm.autorun.name:sub(1, -2):gsub(" ", "/") .. " " .. fm.autorun.filePath .. " " .. surfaceName:gsub(" ", "|") .. " " .. fm.autorun.daytime .. "\n" .. latest
 			end
-			game.write_file(fm.topfolder .. "latest.txt", latest, false, event.player_index)
+			helpers.write_file(fm.topfolder .. "latest.txt", latest, false, event.player_index)
 			
 
 
@@ -213,7 +213,7 @@ script.on_event(defines.events.on_tick, function(event)
 
 		elseif fm.ticks < 2 then
 			
-			game.write_file(fm.topfolder .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime .. "/done.txt", "", false, event.player_index)
+			helpers.write_file(fm.topfolder .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime .. "/done.txt", "", false, event.player_index)
 	
 			-- remove no path sign
 			for key, entity in pairs(fm.currentSurface.find_entities_filtered({type="flying-text"})) do
