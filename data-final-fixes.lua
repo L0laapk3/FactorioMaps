@@ -64,11 +64,11 @@ for _, signal in pairs(data.raw["virtual-signal"]) do
 	index(signal, "virtual")
 end
 
--- hopefully we dont have to hardcode this shit anymore in 0.17.. https://forums.factorio.com/viewtopic.php?f=28&t=64875
--- 1.1 update: lmao
-for _, type in pairs({"item", "ammo", "capsule", "gun", "item-with-entity-data", "item-with-label", "item-with-inventory", "blueprint-book", "item-with-tags", "selection-tool", "blueprint", "deconstruction-item", "module", "rail-planner", "tool", "armor", "mining-tool", "repair-tool"}) do
-	for _, item in pairs(data.raw[type]) do
-		index(item, "item")
+for type, _ in pairs(defines.prototypes["item"]) do
+	if data.raw[type] ~= nil then
+		for _, item in pairs(data.raw[type]) do
+			index(item, "item")
+		end
 	end
 end
 
