@@ -9,12 +9,16 @@ import traceback
 from pathlib import Path
 
 try:
-    import pkg_resources
-    from pkg_resources import DistributionNotFound, VersionConflict
+    from importlib.metadata import version, PackageNotFoundError
+    from packaging.requirements import Requirement
     try:
         with Path(__file__, "..", "requirements.txt").resolve().open("r", encoding="utf-8") as f:
-            pkg_resources.require(f.read().splitlines())
-    except (DistributionNotFound, VersionConflict) as ex:
+            for line in f.read().splitlines():
+                req = Requirement(line)
+                installed_version = version(req.name)
+                if installed_version not in req.specifier:
+                    raise ImportError(f'Package {req.name} has been installed with incompatible version! Installed  "{installed_version}", wanted "{req.specifier}".')
+    except (PackageNotFoundError, ModuleNotFoundError) as ex:
         raise ImportError from ex
 except ImportError as ex:
     traceback.print_exc()

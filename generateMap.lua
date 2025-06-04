@@ -55,7 +55,7 @@ function fm.generateMap(data)
 	-- delete folder (if it already exists)
 	local basePath = fm.topfolder
 	local subPath = basePath .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime
-	game.remove_path(subPath)
+	helpers.remove_path(subPath)
 	subPath = subPath .. "/"
 
 
@@ -82,7 +82,7 @@ function fm.generateMap(data)
 
 	if fm.tilenames == nil then
 		local craftableItems = {}
-		for _, recipe in pairs(game.recipe_prototypes) do
+		for _, recipe in pairs(prototypes.recipe) do
 			for _, product in pairs(recipe.products) do
 				if product.type == "item" then
 					craftableItems[product.name] = true
@@ -92,7 +92,7 @@ function fm.generateMap(data)
 
 		local tilenamedict = {}
 		for itemName, _ in pairs(craftableItems) do
-			item = game.item_prototypes[itemName]
+			item = prototypes.item[itemName]
 			if item.place_as_tile_result ~= nil and item.place_as_tile_result.result.autoplace_specification == nil then
 				tilenamedict[item.place_as_tile_result.result.name] = true
 			end
@@ -471,7 +471,7 @@ function fm.generateMap(data)
 			tick = fm.autorun.mapInfo.lastTick,
 			path = fm.autorun.filePath,
 			date = fm.autorun.date,
-			mods = game.active_mods,
+			mods = script.active_mods,
 			surfaces = {}
 		}
 
@@ -541,7 +541,7 @@ function fm.generateMap(data)
 			fm.autorun.chunkCache[fm.autorun.mapInfo.lastTick] = {}
 		end
 		fm.autorun.chunkCache[fm.autorun.mapInfo.lastTick][fm.currentSurface.name] = allGridString:sub(1, -2)
-		game.write_file(basePath .. "chunkCache.json", prettyjson(fm.autorun.chunkCache), false, data.player_index)
+		helpers.write_file(basePath .. "chunkCache.json", prettyjson(fm.autorun.chunkCache), false, data.player_index)
 
 	end
 	fm.autorun.mapInfo.maps[mapIndex].surfaces[fm.currentSurface.name][fm.autorun.daytime] = true
@@ -693,7 +693,7 @@ function fm.generateMap(data)
 	end
 
 
-	game.write_file(basePath .. "mapInfo.json", json(fm.autorun.mapInfo), false, data.player_index)
-	game.write_file(subPath .. "crop.txt", "v2" .. cropText, false, data.player_index)
+	helpers.write_file(basePath .. "mapInfo.json", json(fm.autorun.mapInfo), false, data.player_index)
+	helpers.write_file(subPath .. "crop.txt", "v2" .. cropText, false, data.player_index)
 
 end
