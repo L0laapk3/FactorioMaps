@@ -82,7 +82,7 @@ function fm.generateMap(data)
 
 	if fm.tilenames == nil then
 		local craftableItems = {}
-		for _, recipe in pairs(game.recipe_prototypes) do
+		for _, recipe in pairs(prototypes.recipe) do
 			for _, product in pairs(recipe.products) do
 				if product.type == "item" then
 					craftableItems[product.name] = true
@@ -92,7 +92,7 @@ function fm.generateMap(data)
 
 		local tilenamedict = {}
 		for itemName, _ in pairs(craftableItems) do
-			item = game.item_prototypes[itemName]
+			item = prototypes.item[itemName]
 			if item.place_as_tile_result ~= nil and item.place_as_tile_result.result.autoplace_specification == nil then
 				tilenamedict[item.place_as_tile_result.result.name] = true
 			end
