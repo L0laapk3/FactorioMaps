@@ -114,15 +114,3 @@ data.raw["utility-sprites"].default["warning_icon"]["filename"] = "__L0laapk3_Fa
 if data.raw["item-request-proxy"]["item-request-proxy"].picture ~= nil then
 	data.raw["item-request-proxy"]["item-request-proxy"].picture.filename = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
 end
-
-
-
-
-
-
-
-
-
-
-
-
