@@ -89,6 +89,39 @@ script.on_event(defines.events.on_tick, function(event)
 			fm.API.pull()
 
 			
+			if fm.autorun.surfaces == "all" then
+				-- discover every surface charted by a player force, including space platforms
+				fm.autorun.surfaces = {}
+				for _, surface in pairs(game.surfaces) do
+					local include = false
+					if surface.platform ~= nil then
+						-- space platforms are always visible to their force, include them if any chunk exists
+						for chunk in surface.get_chunks() do
+							if surface.is_chunk_generated(chunk) then
+								include = true
+								break
+							end
+						end
+					else
+						for chunk in surface.get_chunks() do
+							for _, force in pairs(game.forces) do
+								if #force.players > 0 and force.is_chunk_charted(surface, chunk) then
+									include = true
+									break
+								end
+							end
+							if include then
+								break
+							end
+						end
+					end
+					if include then
+						fm.autorun.surfaces[#fm.autorun.surfaces+1] = surface.name
+						log("Discovered charted surface: " .. surface.name)
+					end
+				end
+			end
+
 			if fm.autorun.surfaces == nil then
 				if fm.autorun.mapInfo.defaultSurface == nil then
 					if game.surfaces["battle_surface_1"] then	-- detect pvp scenario
@@ -205,11 +238,12 @@ script.on_event(defines.events.on_tick, function(event)
 
 
 
+			-- some surfaces (e.g. space platforms) may not allow changing daytime
 			if fm.autorun.daytime == "day" then
-				fm.currentSurface.daytime = 0
+				pcall(function() fm.currentSurface.daytime = 0 end)
 				fm.generateMap(event)
 			else
-				fm.currentSurface.daytime = 0.5
+				pcall(function() fm.currentSurface.daytime = 0.5 end)
 				fm.generateMap(event)
 			end
 			
@@ -220,6 +254,10 @@ script.on_event(defines.events.on_tick, function(event)
 			helpers.write_file(fm.topfolder .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime .. "/done.txt", "", false, event.player_index)
 
 			fm.ticks = 2
+
+		elseif #fm.autorun.surfaces > 0 then
+
+			fm.ticks = nil	-- more surfaces to capture in this launch
 
 		else
 			fm.topfolder = nil
@@ -254,7 +292,7 @@ script.on_event(defines.events.on_tick, function(event)
 		game.tick_paused = true
 		game.ticks_to_run = 0
 		if player.character then
-			player.character.active = false
+			pcall(function() player.character.active = false end) -- read only for some character states in 2.x
 		end
 		
 		local main = player.gui.center.add{type = "frame", caption = text[1], direction = "vertical"}
