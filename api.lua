@@ -232,7 +232,7 @@ remote.add_interface("factoriomaps", {
 		elseif isHidden == false then
 			for i, s in pairs(fm.API.hiddenSurfaces) do
 				if s == surface then
-					fm.API.hiddenSurfaces.remove(i)
+					table.remove(fm.API.hiddenSurfaces, i)
 					return
 				end
 			end
