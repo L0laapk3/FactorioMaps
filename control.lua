@@ -195,8 +195,12 @@ script.on_event(defines.events.on_tick, function(event)
 			end
 
 			-- freeze all entities. Eventually, stuff will run out of power, but for just 2 ticks, it should be fine.
-			for key, entity in pairs(fm.currentSurface.find_entities_filtered({invert=true, name="hidden-electric-energy-interface"})) do
+			-- some entity types have a read only active flag in 2.x, skip those.
+			local function deactivate(entity)
 				entity.active = false
+			end
+			for key, entity in pairs(fm.currentSurface.find_entities_filtered({invert=true, name="hidden-electric-energy-interface"})) do
+				pcall(deactivate, entity)
 			end
 
 
