@@ -309,7 +309,10 @@ def buildAutorun(args: Namespace, workFolder: Path, outFolder: Path, isFirstSnap
         return str(value).lower()
 
     with AUTORUN_PATH.resolve().open("w", encoding="utf-8") as f:
-        surfaceString = '{"' + '", "'.join(args.surface) + '"}' if args.surface else "nil"
+        if args.all_surfaces:
+            surfaceString = '"all"'
+        else:
+            surfaceString = '{"' + '", "'.join(args.surface) + '"}' if args.surface else "nil"
         autorunString = \
             f'''fm.autorun = {{
             HD = {lowerBool(args.hd)},
@@ -400,6 +403,7 @@ def auto(*args):
     parser.add_argument("--connect-range", type=float, default=1.2, help="The maximum range from connection buildings (rails, electric poles) around which pictures are saved.")
     parser.add_argument("--tag-range", type=float, default=5.2, help="The maximum range from mapview tags around which pictures are saved.")
     parser.add_argument("--surface", action="append", default=[], help="Used to capture other surfaces. If left empty, the surface the player is standing on will be used. To capture multiple surfaces, use the argument multiple times: --surface nauvis --surface 'Factory floor 1'")
+    parser.add_argument("--all-surfaces", dest="all_surfaces", action="store_true", help="Capture every surface that has been charted, e.g. all visited planets and space platforms.")
     parser.add_argument("--factorio", type=lambda p: Path(p).resolve(), help="Use factorio.exe from PATH instead of attempting to find it in common locations.")
     parser.add_argument("--output-path", dest="basepath", type=lambda p: Path(p).resolve(), default=Path(userFolder, "script-output", "FactorioMaps"), help="path to the output folder (default is '..\\..\\script-output\\FactorioMaps')")
     parser.add_argument("--mod-path", "--modpath", type=lambda p: Path(p).resolve(), default=Path(userFolder, 'mods'), help="Use PATH as the mod folder. (default is '..\\..\\mods')")

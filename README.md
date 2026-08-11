@@ -50,6 +50,7 @@ Heres a list of flags that `auto.py` can accept:
 | `--connect-range=1.2`*\** | The maximum range from connection buildings (rails, electric poles) around which pictures are saved. |
 | `--tag-range=5.2`*\** | The maximum range from mapview tags around which pictures are saved. |
 | `--surface=nauvis` | Used to capture other surfaces. If left empty, the surface the player is standing on will be used. To capture multiple surfaces, use the argument multiple times: `--surface=nauvis --surface="Factory floor 1"`. To find out the names of surfaces, use the command `/c for _,s in pairs(game.surfaces) do game.print(s.name) end`. |
+| `--all-surfaces` | Capture every surface that has been charted, e.g. all visited planets and space platforms. |
 | `--factorio=PATH` | Use `factorio.exe` from *PATH* instead of attempting to find it in common locations. |
 | `--modpath=PATH` | Use *PATH* as the mod folder. |
 | `--basepath=RELPATH` | Output to `script-output\RELPATH` instead of `script-output\FactorioMaps`. (Factorio cannot output outside of `script-output`) |
