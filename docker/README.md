@@ -59,3 +59,20 @@ Captures are memory hungry during the tiling step. On a 16 GB host use
 `--maxthreads 4`; the default (one thread per core) can get the process OOM
 killed on large maps. A 20 surface, 2 snapshot timeline produced ~2.4 GB of
 tiles, so give the output volume room.
+
+## GPU vs software rendering
+
+Measured on an Intel UHD 620 (Whiskey Lake) with 8 cores, capturing 7 surfaces
+day only from the same save, two runs each, alternating:
+
+| phase | GPU (VirtualGL) | software (llvmpipe) |
+| --- | --- | --- |
+| save loading | 74–76s | 91s |
+| in game (load, prescan, render) | 496–508s | 667s |
+| tiling after the game exits | 23s | 22s |
+| **total** | **531s / 541s** | **701s / 699s** |
+
+Software rendering costs about 30% wall clock on this hardware, so it is a
+slowdown rather than a blocker. The tiling phase is identical either way, which
+is the sanity check: it is pure CPU work and should not care about the renderer.
+The gap widens with `--hd`, more surfaces, or a faster GPU.
