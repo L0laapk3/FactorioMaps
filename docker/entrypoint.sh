@@ -160,7 +160,7 @@ if [ "${LOG_TIMESTAMPS:-1}" = "1" ]; then
         --output-path "$FACTORIO_USER_DIR/script-output/FactorioMaps" \
         --mod-path "$FACTORIO_USER_DIR/mods" \
         --config-path "$FACTORIO_USER_DIR/config" \
-        "${ARGS[@]}" 2>&1 | awk '{ print strftime("%H:%M:%S"), $0; fflush() }'
+        "${ARGS[@]}" 2>&1 | gawk '{ print strftime("%H:%M:%S"), $0; fflush() }'
     exit "${PIPESTATUS[0]}"
 fi
 exec /opt/venv/bin/python -u auto.py \

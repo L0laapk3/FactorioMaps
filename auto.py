@@ -72,6 +72,13 @@ userFolder = findUserFolder()
 # factorio's rich text names some prototype types differently to data.raw
 RICH_TEXT_TYPE_ALIASES = {"virtual-signal": "virtual"}
 
+# harmless chatter from the game and its libraries, repeated enough to drown a log
+GAME_LOG_NOISE = (
+    "libpng warning:",
+    "XDG_RUNTIME_DIR",
+    "_XSERVTransmkdir",
+)
+
 
 def naturalSort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -104,6 +111,8 @@ def startGameAndReadGameLogs(results, condition, exeWithArgs, isSteam, tmpDir, p
 
         nonlocal prevPrinted
         line = line.rstrip('\n')
+        if any(noise in line for noise in GAME_LOG_NOISE):
+            return
         if re.match(r'^\ *\d+(?:\.\d+)? *[^\n]*$', line) is None:
             if prevPrinted:
                 printErase(line)
