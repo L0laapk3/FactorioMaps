@@ -12,6 +12,8 @@ import psutil
 from PIL import Image
 from turbojpeg import TurboJPEG
 
+from progress import Progress
+
 maxQuality = False  		# Set this to true if you want to compress/postprocess the images yourself later
 useBetterEncoder = True 	# Slower encoder that generates smaller images.
 
@@ -318,7 +320,7 @@ def zoom(
                         if daytimeReference is None or daytime == daytimeReference:
                             if not Path(topPath, "Images", str(map["path"]), surfaceName, daytime, str(maxzoom - 1)).is_dir():
 
-                                print(f"zoom {0:5.1f}% [{' ' * (tsize()[0]-15)}]", end="")
+                                bar = Progress("zoom")
 
                                 generateThumbnail = (
                                     needsThumbnail
@@ -410,16 +412,7 @@ def zoom(
                                 for _ in range(originalSize):
                                     resultQueue.get(True)
                                     doneSize += 1
-                                    progress = float(doneSize) / originalSize
-                                    tsiz = tsize()[0] - 15
-                                    print(
-                                        "\rzoom {:5.1f}% [{}{}]".format(
-                                            round(progress * 98, 1),
-                                            "=" * int(progress * tsiz),
-                                            " " * (tsiz - int(progress * tsiz)),
-                                        ),
-                                        end="",
-                                    )
+                                    bar.update(float(doneSize) / originalSize * 0.98)
 
                                 for p in processes:
                                     p.join()
@@ -492,4 +485,4 @@ def zoom(
 
                                     thumbnail.save(Path(imagePath, "thumbnail" + THUMBNAILEXT))
 
-                                print("\rzoom {:5.1f}% [{}]".format(100, "=" * (tsize()[0] - 15)))
+                                bar.done()

@@ -18,8 +18,40 @@ docker compose run --rm factoriomaps --no-update --all-surfaces --maxthreads 4 m
 The generated map lands in `data/script-output/FactorioMaps/mymap`. Serve that
 directory with any static web server.
 
-Everything after the image name is passed straight to `auto.py`, so all the
-normal flags work (`--hd`, `--dayonly`, `--surface`, and so on).
+## Options
+
+Everything after the image name goes straight to `auto.py`, so every flag in
+the main README works unchanged. The ones that matter most here:
+
+| flag | effect |
+| --- | --- |
+| `--dayonly` | skip the night pass, roughly halves the run |
+| `--nightonly` | skip the day pass |
+| `--all-surfaces` | every charted planet and space platform |
+| `--surface NAME` | one specific surface, repeatable |
+| `--hd` | 64 instead of 32 pixels per tile, much slower and much bigger |
+| `--maxthreads N` | cap tiling threads, use 4 on a 16 GB host |
+| `--no-tags` | leave map labels out |
+| `--default-timestamp N` | which snapshot the page opens on, -1 is newest |
+| `--delete` | wipe the output folder before starting |
+
+```bash
+docker compose run --rm factoriomaps --no-update --all-surfaces --dayonly mymap save1 save2
+```
+
+For compose or cron, where overriding the command is awkward, `FACTORIOMAPS_ARGS`
+holds the same flags:
+
+```yaml
+environment:
+  FACTORIOMAPS_ARGS: "--no-update --all-surfaces --dayonly --maxthreads 4"
+command: ["mymap", "mysave"]
+```
+
+Anything on the command line is appended after those, so it wins.
+
+Two container specific switches: `ENABLE_VNC=1` to watch a run, and
+`LOG_TIMESTAMPS=0` to drop the timestamp prefix from the log.
 
 ## The factorio client
 

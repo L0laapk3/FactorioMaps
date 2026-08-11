@@ -9,6 +9,8 @@ from shutil import get_terminal_size as tsize
 import psutil
 from PIL import Image
 
+from progress import Progress
+
 ext = ".png"
 
 
@@ -53,7 +55,7 @@ def crop(outFolder, timestamp, surface, daytime, basePath=None, args: Namespace 
     while not datapath.exists():
         time.sleep(1)
 
-    print(f"crop {0:5.1f}% [{' ' * (tsize()[0]-15)}]", end="")
+    bar = Progress("crop")
 
     files = []
     with datapath.open("r", encoding="utf-8") as data:
@@ -78,14 +80,12 @@ def crop(outFolder, timestamp, surface, daytime, basePath=None, args: Namespace 
             for _ in range(len(files)):
                 if progressQueue.get(True):
                     doneSize += 1
-                    progress = float(doneSize) / originalSize
-                    tsiz = tsize()[0] - 15
-                    print(f"\rcrop {round(progress * 100, 1):5.1f}% [{'=' * int(progress * tsiz)}{' ' * (tsiz - int(progress * tsiz))}]",end="",)
+                    bar.update(float(doneSize) / originalSize)
             workers.wait()
             files = [x for x in workers.get() if x]
             if len(files) > 0:
                 time.sleep(10 if len(files) > 1000 else 1)
-        print(f"\rcrop {100:5.1f}% [{'=' * (tsize()[0]-15)}]")
+        bar.done()
     except KeyboardInterrupt:
 
         time.sleep(0.2)

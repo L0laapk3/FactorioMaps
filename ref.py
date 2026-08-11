@@ -7,6 +7,8 @@ from functools import partial
 from shutil import get_terminal_size as tsize
 import traceback
 
+from progress import Progress
+
 
 
 ext = ".png"
@@ -247,13 +249,11 @@ def ref(
             #compare(compareList[0], treshold=treshold, basePath=os.path.join(topPath, "Images"), new=str(newMap["path"]), progressQueue=progressQueue)
             workers = pool.map_async(partial(compare, basePath=os.path.join(topPath, "Images"), new=str(newMap["path"]), progressQueue=progressQueue), compareList, 128)
             doneSize = 0
-            print("ref  {:5.1f}% [{}]".format(0, " " * (tsize()[0]-15)), end="")
+            bar = Progress("ref ")
             for i in range(len(compareList)):
                 progressQueue.get(True)
                 doneSize += 1
-                progress = float(doneSize) / len(compareList)
-                tsiz = tsize()[0]-15
-                print("\rref  {:5.1f}% [{}{}]".format(round(progress * 100, 1), "=" * int(progress * tsiz), " " * (tsiz - int(progress * tsiz))), end="")
+                bar.update(float(doneSize) / len(compareList))
             workers.wait()
             resultList = workers.get()
 
@@ -261,7 +261,7 @@ def ref(
             firstRemoveList += [x[1] for x in [x for x in resultList if not x[0]]]
             if args.verbose: print("found %s changed in %s images" % (len(newList), len(compareList)))
             keepList += newList
-            print("\rref  {:5.1f}% [{}]".format(100, "=" * (tsize()[0]-15)))
+            bar.done()
 
 
         if args.verbose: print("scanning %s chunks for neighbour cropping" % len(firstRemoveList))

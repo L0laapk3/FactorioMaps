@@ -140,9 +140,32 @@ if [ "$SHELL_MODE" = "1" ]; then
 fi
 
 cd /opt/factoriomaps
-exec /opt/venv/bin/python auto.py \
+
+# Every auto.py flag can be passed straight to the container. FACTORIOMAPS_ARGS
+# is a convenience for compose and cron, where overriding the command is
+# awkward; anything given on the command line is appended after it and wins.
+ARGS=()
+if [ -n "${FACTORIOMAPS_ARGS:-}" ]; then
+    read -r -a ENV_ARGS <<< "$FACTORIOMAPS_ARGS"
+    ARGS+=("${ENV_ARGS[@]}")
+fi
+ARGS+=("$@")
+
+log "auto.py ${ARGS[*]}"
+
+set -o pipefail
+if [ "${LOG_TIMESTAMPS:-1}" = "1" ]; then
+    /opt/venv/bin/python -u auto.py \
+        --factorio "$LAUNCH_BINARY" \
+        --output-path "$FACTORIO_USER_DIR/script-output/FactorioMaps" \
+        --mod-path "$FACTORIO_USER_DIR/mods" \
+        --config-path "$FACTORIO_USER_DIR/config" \
+        "${ARGS[@]}" 2>&1 | awk '{ print strftime("%H:%M:%S"), $0; fflush() }'
+    exit "${PIPESTATUS[0]}"
+fi
+exec /opt/venv/bin/python -u auto.py \
     --factorio "$LAUNCH_BINARY" \
     --output-path "$FACTORIO_USER_DIR/script-output/FactorioMaps" \
     --mod-path "$FACTORIO_USER_DIR/mods" \
     --config-path "$FACTORIO_USER_DIR/config" \
-    "$@"
+    "${ARGS[@]}"

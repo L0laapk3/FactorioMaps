@@ -17,6 +17,8 @@ services:
       FACTORIO_VERSION: "${FACTORIO_VERSION:-latest}"
       # set to 1 and open http://host:6080/vnc.html to watch the capture
       ENABLE_VNC: "${ENABLE_VNC:-0}"
+      # default auto.py flags, anything in `command` is appended after these
+      FACTORIOMAPS_ARGS: "${FACTORIOMAPS_ARGS:---no-update --all-surfaces --dayonly --maxthreads 4}"
     ports:
       - "6080:6080"
     # intel/amd gpu passthrough; drop this block to render with llvmpipe
@@ -26,7 +28,7 @@ services:
       - video
       - render
     shm_size: 2gb
-    command: ["--no-update", "--all-surfaces", "--maxthreads", "4", "mymap"]
+    command: ["mymap"]
 
 volumes:
   factorio-client:
