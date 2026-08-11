@@ -883,11 +883,13 @@ map.addControl(new L.Control.infoButton());
 		overview.push(["Factorio", info.mods.base]);
 	definitionList(overview);
 
-	if (info.players && info.players.length) {
-		section("Players (" + info.players.length + ")");
+	// a capture run joins the save as an unnamed player, skip those
+	const players = (info.players || []).filter(p => p.name);
+	if (players.length) {
+		section("Players (" + players.length + ")");
 		const ul = document.createElement("ul");
 		ul.className = "info-list";
-		info.players.slice().sort((a, b) => (b.online_time || 0) - (a.online_time || 0)).forEach(p => {
+		players.sort((a, b) => (b.online_time || 0) - (a.online_time || 0)).forEach(p => {
 			const li = document.createElement("li");
 			const name = document.createElement("span");
 			name.className = "info-name";
