@@ -1,4 +1,5 @@
-PyTurboJPEG>=1.1.5
+# 2.0 dropped support for libjpeg-turbo 2.x, which is what mozjpeg/ ships
+PyTurboJPEG>=1.1.5,<2.0
 psutil>=5.4.8
 numpy>=1.16.4
 Pillow>=6.1.0

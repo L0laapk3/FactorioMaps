@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from shutil import copytree, rmtree
 from tempfile import TemporaryDirectory
@@ -55,6 +56,12 @@ def update(Force=True):
 		copytree(tempDir, targetPath)
 		with open(Path(targetPath, "VERSION"), "w") as f:
 			f.write(str(CURRENTVERSION))
+
+		# the temporary directory is only readable by its owner, and copytree
+		# carries that over. these are static web assets, they need to be readable.
+		os.chmod(targetPath, 0o755)
+		for entry in targetPath.iterdir():
+			os.chmod(entry, 0o644)
 			
 		if __name__ == "__main__":
 			input("Press Enter to continue...")

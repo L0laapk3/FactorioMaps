@@ -51,6 +51,9 @@ from updateLib import update as updateLib
 from zoom import zoom, zoomRenderboxes
 
 def findUserFolder():
+    # explicit wins, for containers and other unusual layouts
+    if os.getenv("FACTORIO_USER_DIR"):
+        return Path(os.getenv("FACTORIO_USER_DIR")).resolve()
     candidates = [Path(__file__, "..", "..", "..").resolve()]
     if os.name == "nt":
         if os.getenv("APPDATA"):
@@ -262,10 +265,25 @@ def linkCustomModFolder(modpath: Path):
     linkDir(Path(modpath, Path('.').resolve().name), Path("."))
 
 
+def buildDefaultModlist(modpath: Path):
+    # factorio writes this itself on first launch; a fresh mod folder (a container,
+    # say) has none yet, so mirror what it would produce: everything present, enabled.
+    names = {"base"}
+    for entry in modpath.iterdir():
+        match = re.match(r"^(.*)_\d+\.\d+\.\d+$", entry.stem if entry.suffix == ".zip" else entry.name)
+        if match and match.group(1) != "L0laapk3_FactorioMaps":
+            names.add(match.group(1))
+    return {"mods": [{"name": name, "enabled": True} for name in sorted(names)]}
+
+
 def changeModlist(modpath: Path,newState: bool):
     print(f"{'Enabling' if newState else 'Disabling'} FactorioMaps mod")
     done = False
     modlistPath = Path(modpath, "mod-list.json")
+    if not modlistPath.is_file():
+        print(f"No mod-list.json in {modpath}, enabling every mod found there")
+        with modlistPath.open("w", encoding="utf-8") as f:
+            json.dump(buildDefaultModlist(modpath), f, indent=2)
     with modlistPath.open("r", encoding="utf-8") as f:
         modlist = json.load(f)
     for mod in modlist["mods"]:
@@ -363,7 +381,13 @@ def buildConfig(args: Namespace, tmpDir, basepath):
         configFile.writelines(("; version=3\n", ))
         config.write(configFile, space_around_delimiters=False)
 
-    copy(Path(userFolder, 'player-data.json'), tmpDir)
+    # a fresh install (or a container) has no player-data.json yet
+    playerData = Path(userFolder, 'player-data.json')
+    if playerData.is_file():
+        copy(playerData, tmpDir)
+    else:
+        with Path(tmpDir, 'player-data.json').open("w", encoding="utf-8") as f:
+            f.write("{}")
 
     return configPath
 

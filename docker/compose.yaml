@@ -1,0 +1,32 @@
+services:
+  factoriomaps:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: factoriomaps:latest
+    # run as the host user so the generated maps are not owned by root
+    user: "${UID:-1000}:${GID:-1000}"
+    # saves, mods and the generated maps live here
+    volumes:
+      - ./data:/data
+      - factorio-client:/factorio
+    environment:
+      # only needed the first time, to fetch the client into the volume
+      FACTORIO_USERNAME: "${FACTORIO_USERNAME:-}"
+      FACTORIO_TOKEN: "${FACTORIO_TOKEN:-}"
+      FACTORIO_VERSION: "${FACTORIO_VERSION:-latest}"
+      # set to 1 and open http://host:6080/vnc.html to watch the capture
+      ENABLE_VNC: "${ENABLE_VNC:-0}"
+    ports:
+      - "6080:6080"
+    # intel/amd gpu passthrough; drop this block to render with llvmpipe
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - render
+    shm_size: 2gb
+    command: ["--no-update", "--all-surfaces", "--maxthreads", "4", "mymap"]
+
+volumes:
+  factorio-client:

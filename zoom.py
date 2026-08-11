@@ -36,24 +36,39 @@ def printErase(arg):
         pass
 
 
-# note that these are all 64 bit libraries since factorio doesnt support 32 bit.
-if os.name == "nt":
-    jpeg = TurboJPEG(Path(__file__, "..", "mozjpeg/turbojpeg.dll").resolve().as_posix())
-elif _platform == "darwin":
-    # no bundled dylib for mac, use a system installed libturbojpeg (brew install jpeg-turbo)
-    jpeg = None
-    for libPath in ("/opt/homebrew/opt/jpeg-turbo/lib/libturbojpeg.dylib",
-                    "/usr/local/opt/jpeg-turbo/lib/libturbojpeg.dylib",
-                    None):  # None = let PyTurboJPEG search default locations
-        try:
-            jpeg = TurboJPEG(libPath)
-            break
-        except (OSError, RuntimeError):
-            continue
-    if jpeg is None:
-        raise RuntimeError("libturbojpeg not found. Install it with `brew install jpeg-turbo`.")
-else:
-    jpeg = TurboJPEG(Path(__file__, "..", "mozjpeg/libturbojpeg.so").resolve().as_posix())
+# the bundled libraries are 64 bit x86, fall back to a system libturbojpeg elsewhere
+# (macOS, and linux on anything that is not x86-64).
+def loadTurboJpeg():
+    def bundled(name):
+        path = Path(__file__, "..", "mozjpeg", name).resolve()
+        return path.as_posix() if path.is_file() else None
+
+    if os.name == "nt":
+        candidates = [bundled("turbojpeg.dll")]
+    elif _platform == "darwin":
+        candidates = [
+            "/opt/homebrew/opt/jpeg-turbo/lib/libturbojpeg.dylib",
+            "/usr/local/opt/jpeg-turbo/lib/libturbojpeg.dylib",
+        ]
+    else:
+        candidates = [
+            bundled("libturbojpeg.so"),
+            "/usr/lib/x86_64-linux-gnu/libturbojpeg.so.0",
+            "/usr/lib/aarch64-linux-gnu/libturbojpeg.so.0",
+            "/usr/lib64/libturbojpeg.so.0",
+        ]
+    candidates.append(None)  # None = let PyTurboJPEG search the default locations
+
+    for libPath in candidates:
+        if libPath is None or Path(libPath).is_file() or not Path(libPath).parent.exists():
+            try:
+                return TurboJPEG(libPath)
+            except (OSError, RuntimeError):
+                continue
+    hint = "brew install jpeg-turbo" if _platform == "darwin" else "install the libturbojpeg package"
+    raise RuntimeError(f"libturbojpeg could not be loaded. Try: {hint}")
+
+jpeg = loadTurboJpeg()
 
 
 def saveCompress(img, path: Path):
