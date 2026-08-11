@@ -27,6 +27,11 @@ Verified by generating a two-snapshot timeline across 20 surfaces — Nauvis, Vu
 ## Multi-surface capture fix (#116)
 The surface loop only ever captured the first surface: after finishing one it set `fm.done`, so the game sat on the "finished capturing" screen while the script waited forever for the next `done.txt`. It now resets the tick counter while surfaces remain, so all surfaces are captured in a single launch.
 
+## Web interface
+- Surface selector rebuilt as two panels: planets left, space platforms right, each with the surface icon, the platform's in-game name and the planet it is stationed at. Rich text in platform names renders as icons.
+- Info button (bottom left) opens map details, the player list with playtimes, the mod list and credits.
+- Opengraph/Twitter card tags are filled in per map, so a shared link previews the Nauvis thumbnail plus snapshot, surface and mod counts.
+
 ## Python tooling
 - macOS support: binary autodetection (standalone + Steam), user-data-folder detection, system libturbojpeg (`brew install jpeg-turbo`), app-bundle data dir for tag icons; Space Age DLC mods treated as built-in data mods
 - `--all-surfaces`: capture every charted surface — visited planets and space platforms

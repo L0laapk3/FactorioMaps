@@ -5,7 +5,9 @@ This [Factorio](http://www.factorio.com/) mod turns your factory into a timeline
 Mod portal link: https://mods.factorio.com/mod/L0laapk3_FactorioMaps
 
 # Factorio version support
-Version 5.0.0 and up target **Factorio 2.1** (Space Age surfaces work through the existing `--surface` flag). For Factorio 1.1, use the [4.4.0 release](https://github.com/L0laapk3/FactorioMaps/releases).
+Version 5.0.0 and up target **Factorio 2.1**. For Factorio 1.1, use the [4.4.0 release](https://github.com/L0laapk3/FactorioMaps/releases).
+
+Space Age is fully supported: `--all-surfaces` captures every charted planet and space platform in one go. The map viewer lists planets on the left and platforms on the right, with each platform shown under its in-game name and current station. The info button in the bottom left opens map details, the player list, the mod list and credits.
 
 # How to Install
 **Note that this program now only runs on 64 bit python version 3.6 or higher.**
