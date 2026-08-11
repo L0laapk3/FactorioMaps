@@ -86,7 +86,8 @@ fi
 
 # ---------------------------------------------------------------- display
 log "starting Xvfb on $DISPLAY (${SCREEN_SIZE})"
-Xvfb "$DISPLAY" -screen 0 "$SCREEN_SIZE" -nolisten tcp -noreset &
+# xvfb spends its first seconds complaining about keysyms it cannot resolve
+Xvfb "$DISPLAY" -screen 0 "$SCREEN_SIZE" -nolisten tcp -noreset >/dev/null 2>&1 &
 XVFB_PID=$!
 for _ in $(seq 1 50); do
     xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 && break
@@ -160,7 +161,10 @@ if [ "${LOG_TIMESTAMPS:-1}" = "1" ]; then
         --output-path "$FACTORIO_USER_DIR/script-output/FactorioMaps" \
         --mod-path "$FACTORIO_USER_DIR/mods" \
         --config-path "$FACTORIO_USER_DIR/config" \
-        "${ARGS[@]}" 2>&1 | gawk '{ print strftime("%H:%M:%S"), $0; fflush() }'
+        "${ARGS[@]}" 2>&1 | gawk '
+            # library chatter on stderr, which never reaches auto.py s log handling
+            /libpng warning:|XDG_RUNTIME_DIR|_XSERVTransmkdir|Could not resolve keysym|xkbcomp/ { next }
+            { print strftime("%H:%M:%S"), $0; fflush() }'
     exit "${PIPESTATUS[0]}"
 fi
 exec /opt/venv/bin/python -u auto.py \
