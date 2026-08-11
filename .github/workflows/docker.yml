@@ -1,0 +1,102 @@
+name: docker image
+
+on:
+  push:
+    branches: [master, factorio-2.1]
+    tags: ["v*"]
+  pull_request:
+    branches: [master, factorio-2.1]
+  workflow_dispatch:
+
+env:
+  # ghcr requires a lowercase path, the repository name is mixed case
+  IMAGE: ghcr.io/lordfish/factoriomaps
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Byte compile the python
+        run: python -m compileall -q auto.py crop.py ref.py zoom.py progress.py updateLib.py makeZip.py
+
+      - name: Check the shell scripts
+        run: bash -n docker/entrypoint.sh
+
+      - name: Check the web sources
+        run: |
+          node --check web/index.js
+          python -c "import json; json.load(open('info.json')); json.load(open('updates.json'))"
+
+      - name: Dependencies must resolve
+        # PyTurboJPEG 2.0 dropped libjpeg-turbo 2.x, which is what mozjpeg/ ships,
+        # so an unpinned install silently breaks every run. Catch that here.
+        run: |
+          pip install -r requirements.txt
+          python -c "import turbojpeg, PIL, numpy, psutil; print('dependencies ok')"
+
+  image:
+    runs-on: ubuntu-latest
+    needs: checks
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.IMAGE }}:ci
+
+      - name: Smoke test the image
+        # no factorio client here, so check the parts that do not need one:
+        # the python imports (turbojpeg loads), and that the entrypoint runs.
+        run: |
+          docker run --rm ${{ env.IMAGE }}:ci shell /opt/venv/bin/python -c "
+          import sys; sys.path.insert(0, '/opt/factoriomaps')
+          import zoom, crop, ref, progress
+          print('imports ok, turbojpeg:', type(zoom.jpeg).__name__)"
+          docker run --rm ${{ env.IMAGE }}:ci shell /opt/venv/bin/python /opt/factoriomaps/auto.py --help > /dev/null
+          docker run --rm ${{ env.IMAGE }}:ci shell which gawk vglrun Xvfb > /dev/null
+          echo "smoke test passed"
+
+      - name: Log in to the registry
+        if: github.event_name != 'pull_request' && startsWith(github.server_url, 'https://github.com')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha,format=short
+
+      - name: Publish
+        if: github.event_name != 'pull_request' && startsWith(github.server_url, 'https://github.com')
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
