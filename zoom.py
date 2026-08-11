@@ -39,8 +39,19 @@ def printErase(arg):
 # note that these are all 64 bit libraries since factorio doesnt support 32 bit.
 if os.name == "nt":
     jpeg = TurboJPEG(Path(__file__, "..", "mozjpeg/turbojpeg.dll").resolve().as_posix())
-# elif _platform == "darwin":						# I'm not actually sure if mac can run linux libraries or not.
-# 	jpeg = TurboJPEG("mozjpeg/libturbojpeg.dylib")	# If anyone on mac has problems with the line below please make an issue :)
+elif _platform == "darwin":
+    # no bundled dylib for mac, use a system installed libturbojpeg (brew install jpeg-turbo)
+    jpeg = None
+    for libPath in ("/opt/homebrew/opt/jpeg-turbo/lib/libturbojpeg.dylib",
+                    "/usr/local/opt/jpeg-turbo/lib/libturbojpeg.dylib",
+                    None):  # None = let PyTurboJPEG search default locations
+        try:
+            jpeg = TurboJPEG(libPath)
+            break
+        except (OSError, RuntimeError):
+            continue
+    if jpeg is None:
+        raise RuntimeError("libturbojpeg not found. Install it with `brew install jpeg-turbo`.")
 else:
     jpeg = TurboJPEG(Path(__file__, "..", "mozjpeg/libturbojpeg.so").resolve().as_posix())
 

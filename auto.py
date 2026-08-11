@@ -9,13 +9,9 @@ import traceback
 from pathlib import Path
 
 try:
-    import pkg_resources
-    from pkg_resources import DistributionNotFound, VersionConflict
-    try:
-        with Path(__file__, "..", "requirements.txt").resolve().open("r", encoding="utf-8") as f:
-            pkg_resources.require(f.read().splitlines())
-    except (DistributionNotFound, VersionConflict) as ex:
-        raise ImportError from ex
+    import importlib
+    for module in ("psutil", "PIL", "numpy", "turbojpeg"):
+        importlib.import_module(module)
 except ImportError as ex:
     traceback.print_exc()
     print("\nDependencies not met. Run `pip install -r requirements.txt` to install missing dependencies.")
@@ -54,7 +50,21 @@ from ref import ref
 from updateLib import update as updateLib
 from zoom import zoom, zoomRenderboxes
 
-userFolder = Path(__file__, "..", "..", "..").resolve()
+def findUserFolder():
+    candidates = [Path(__file__, "..", "..", "..").resolve()]
+    if os.name == "nt":
+        if os.getenv("APPDATA"):
+            candidates.append(Path(os.getenv("APPDATA"), "Factorio"))
+    elif sys.platform == "darwin":
+        candidates.append(Path.home() / "Library" / "Application Support" / "factorio")
+    else:
+        candidates.append(Path.home() / ".factorio")
+    for candidate in candidates:
+        if (candidate / "saves").is_dir() and (candidate / "mods").is_dir():
+            return candidate
+    return candidates[0]
+
+userFolder = findUserFolder()
 
 def naturalSort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -309,7 +319,7 @@ def buildAutorun(args: Namespace, workFolder: Path, outFolder: Path, isFirstSnap
             around_tag_range = {args.tag_range},
             around_build_range = {args.build_range},
             around_connect_range = {args.connect_range},
-            connect_types = {{"lamp", "electric-pole", "radar", "straight-rail", "curved-rail", "rail-signal", "rail-chain-signal", "locomotive", "cargo-wagon", "fluid-wagon", "car"}},
+            connect_types = {{"lamp", "electric-pole", "radar", "straight-rail", "curved-rail-a", "curved-rail-b", "half-diagonal-rail", "legacy-straight-rail", "legacy-curved-rail", "elevated-straight-rail", "elevated-curved-rail-a", "elevated-curved-rail-b", "elevated-half-diagonal-rail", "rail-ramp", "rail-support", "rail-signal", "rail-chain-signal", "locomotive", "cargo-wagon", "fluid-wagon", "car"}},
             date = "{datetime.datetime.strptime(args.date, "%d/%m/%y").strftime("%d/%m/%y")}",
             surfaces = {surfaceString},
             name = "{str(outFolder) + "/"}",
@@ -366,7 +376,10 @@ def auto(*args):
                     if os.name == 'nt':
                         subprocess.check_call(("taskkill", "/pid", str(pid)), stdout=subprocess.DEVNULL, shell=True)
                     else:
-                        subprocess.check_call(("killall", "factorio"), stdout=subprocess.DEVNULL)	# TODO: kill correct process instead of just killing all
+                        try:
+                            psutil.Process(pid).terminate()
+                        except psutil.NoSuchProcess:
+                            pass
 
                     while psutil.pid_exists(pid):
                         time.sleep(0.1)
@@ -472,11 +485,21 @@ def auto(*args):
         availableDrives = [
             "%s:/" % d for d in string.ascii_uppercase if driveExists(d)
         ]
+        macPathsStandalone = [
+            "/Applications/factorio.app/Contents/MacOS/factorio",
+        ]
+        macPathsSteam = [
+            str(Path.home() / "Library/Application Support/Steam/steamapps/common/Factorio/factorio.app/Contents/MacOS/factorio"),
+        ]
         possibleFactorioPaths = unixPaths
         if args.steam == 0:
             possibleFactorioPaths += [ drive + path for drive in availableDrives for path in windowsPathsStandalone ]
+            if sys.platform == "darwin":
+                possibleFactorioPaths += macPathsStandalone
         if args.standalone == 0:
             possibleFactorioPaths += [ drive + path for drive in availableDrives for path in windowsPathsSteam ]
+            if sys.platform == "darwin":
+                possibleFactorioPaths += macPathsSteam
 
     try:
         factorioPath = next(
@@ -816,8 +839,11 @@ def auto(*args):
 
                     iconColor = m.group(2).split("?")
                     icon = iconColor[0]
-                    if m.group(1) in ("base", "core"):
-                        src = os.path.join(os.path.split(factorioPath)[0], "../../data", m.group(1), icon + ".png")
+                    if m.group(1) in ("base", "core", "space-age", "quality", "elevated-rails"):
+                        dataDir = Path(factorioPath, "..", "..", "..", "data").resolve()
+                        if not dataDir.is_dir():  # macOS app bundle: factorio.app/Contents/MacOS/factorio -> Contents/data
+                            dataDir = Path(factorioPath, "..", "..", "data").resolve()
+                        src = os.path.join(dataDir, m.group(1), icon + ".png")
                     else:
                         mod = next(mod for mod in modVersions if mod[0] == m.group(1).lower())
                         if not mod[1][3]: #true if mod is zip
