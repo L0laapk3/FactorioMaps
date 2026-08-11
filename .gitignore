@@ -4,3 +4,8 @@ __pycache__
 L0laapk3_FactorioMaps_*.zip
 autorun.lua
 web/lib/
+# local test data and tooling
+_test_Saves/
+.claude/
+.venv/
+.DS_Store
