@@ -69,6 +69,10 @@ def findUserFolder():
 
 userFolder = findUserFolder()
 
+# factorio's rich text names some prototype types differently to data.raw
+RICH_TEXT_TYPE_ALIASES = {"virtual-signal": "virtual"}
+
+
 def naturalSort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [ convert(c) for c in re.split(r'(\d+)', key) ]
@@ -826,6 +830,8 @@ def auto(*args):
         print("updating labels")
         tags = {}
         def addTag(tags, itemType, itemName, force=False):
+            # rich text says [virtual-signal=x], the data stage indexes it as "virtual"
+            itemType = RICH_TEXT_TYPE_ALIASES.get(itemType, itemType)
             index = itemType + itemName[0].upper() + itemName[1:]
             if index in rawTags:
                 tags[index] = {

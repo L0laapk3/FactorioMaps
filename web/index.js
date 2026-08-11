@@ -628,6 +628,9 @@ function prettyName(name) {
 	return name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// factorio's rich text names some prototype types differently to data.raw
+const richTextTypeAliases = { "virtual-signal": "virtual" };
+
 // players can put rich text like [item=iron-plate] in platform names
 function appendRichText(parent, text) {
 	const pattern = /\[([^=\]]+)=([^\]]+)\]/g;
@@ -637,7 +640,7 @@ function appendRichText(parent, text) {
 			parent.appendChild(document.createTextNode(text.substring(last, match.index)));
 		const img = document.createElement("img");
 		img.className = "rich-text-icon";
-		img.src = "Images/labels/" + match[1] + "/" + match[2] + ".png";
+		img.src = "Images/labels/" + (richTextTypeAliases[match[1]] || match[1]) + "/" + match[2] + ".png";
 		img.alt = match[2];
 		img.onerror = function() { this.replaceWith(document.createTextNode(this.alt)); };
 		parent.appendChild(img);
