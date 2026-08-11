@@ -160,7 +160,7 @@ script.on_event(defines.events.on_tick, function(event)
 				local surface = game.surfaces[surfaceName]
 				latest = fm.autorun.name:sub(1, -2):gsub(" ", "/") .. " " .. fm.autorun.filePath .. " " .. surfaceName:gsub(" ", "|") .. " " .. fm.autorun.daytime .. "\n" .. latest
 			end
-			game.write_file(fm.topfolder .. "latest.txt", latest, false, event.player_index)
+			helpers.write_file(fm.topfolder .. "latest.txt", latest, false, event.player_index)
 			
 
 
@@ -181,8 +181,8 @@ script.on_event(defines.events.on_tick, function(event)
 			-- 	fm.teleportedPlayer = true
 			-- end
 			
-			-- remove no path sign and ghost entities
-			for key, entity in pairs(fm.currentSurface.find_entities_filtered({type={"flying-text","entity-ghost","tile-ghost"}})) do
+			-- remove ghost entities. no path signs are not entities anymore since 2.0
+			for key, entity in pairs(fm.currentSurface.find_entities_filtered({type={"entity-ghost","tile-ghost"}})) do
 				entity.destroy()
 			end
 
@@ -213,14 +213,8 @@ script.on_event(defines.events.on_tick, function(event)
 
 		elseif fm.ticks < 2 then
 			
-			game.write_file(fm.topfolder .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime .. "/done.txt", "", false, event.player_index)
-	
-			-- remove no path sign
-			for key, entity in pairs(fm.currentSurface.find_entities_filtered({type="flying-text"})) do
-				entity.destroy()
-			end
+			helpers.write_file(fm.topfolder .. "Images/" .. fm.autorun.filePath .. "/" .. fm.currentSurface.name .. "/" .. fm.autorun.daytime .. "/done.txt", "", false, event.player_index)
 
-	
 			fm.ticks = 2
 
 		else

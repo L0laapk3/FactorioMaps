@@ -64,10 +64,9 @@ for _, signal in pairs(data.raw["virtual-signal"]) do
 	index(signal, "virtual")
 end
 
--- hopefully we dont have to hardcode this shit anymore in 0.17.. https://forums.factorio.com/viewtopic.php?f=28&t=64875
--- 1.1 update: lmao
-for _, type in pairs({"item", "ammo", "capsule", "gun", "item-with-entity-data", "item-with-label", "item-with-inventory", "blueprint-book", "item-with-tags", "selection-tool", "blueprint", "deconstruction-item", "module", "rail-planner", "tool", "armor", "mining-tool", "repair-tool"}) do
-	for _, item in pairs(data.raw[type]) do
+-- 2.0 update: defines.prototypes finally lets us enumerate all item subtypes
+for type in pairs(defines.prototypes["item"]) do
+	for _, item in pairs(data.raw[type] or {}) do
 		index(item, "item")
 	end
 end
@@ -97,21 +96,22 @@ end
 -- end
 
 
-data.raw["utility-sprites"].default["ammo_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["danger_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["destroyed_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["electricity_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["electricity_icon_unplugged"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["fluid_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["fuel_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["no_building_material_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["no_storage_space_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["not_enough_construction_robots_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["not_enough_repair_packs_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["recharge_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["too_far_from_roboport_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["utility-sprites"].default["warning_icon"]["filename"] = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
-data.raw["item-request-proxy"]["item-request-proxy"].picture.filename = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
+-- blank out alert icons so they dont show up on screenshots
+for _, name in pairs({
+	"ammo_icon", "danger_icon", "destroyed_icon", "electricity_icon", "electricity_icon_unplugged",
+	"fluid_icon", "fuel_icon", "no_building_material_icon", "no_storage_space_icon",
+	"not_enough_construction_robots_icon", "not_enough_repair_packs_icon", "recharge_icon",
+	"too_far_from_roboport_icon", "warning_icon"
+}) do
+	local sprite = data.raw["utility-sprites"].default[name]
+	if sprite ~= nil then
+		sprite.filename = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
+	end
+end
+local itemRequestProxy = data.raw["item-request-proxy"]["item-request-proxy"]
+if itemRequestProxy and itemRequestProxy.picture then -- removed in 2.0, uses an alert icon now
+	itemRequestProxy.picture.filename = "__L0laapk3_FactorioMaps__/graphics/empty64.png"
+end
 
 
 
