@@ -611,30 +611,177 @@ let surfaceKeys = Object.keys(layers).filter(s => s != defaultSurface).sort(natu
 if (Object.keys(layers).some(s => s == defaultSurface))
 	surfaceKeys.unshift(defaultSurface)
 
-if (surfaceKeys.length > 1) {
-	surfaceSlider = new L.Control.layerRadioSelector({
-		position: "bottomright",
-		orientation: "vertical",
-		initial: Math.max(0, surfaceKeys.indexOf(currentSurface)),
-		length: (surfaceKeys.length-1)*30,
-		evenSpacing: true,
-		backdrop: false,
-		labels: surfaceKeys.map((s, i) => { return {
-			name: s, layers:
-			Object.values(layers[s]).map(l => ["day", "night"].map(d => l[d]).filter(d => d)).flat()
-		} }),
-		onChange: function(index) {
-			currentSurface = surfaceKeys[index];
-			updateHash();
-			updateLabels();
-		}
-	});
-	map.addControl(surfaceSlider);
-	if (!timeSlider)
-		$(surfaceSlider._container).attr("style", "float: right !important");
 
+// surface metadata from the newest snapshot that captured it
+function surfaceMeta(name) {
+	for (let i = mapInfo.maps.length - 1; i >= 0; i--) {
+		const s = mapInfo.maps[i].surfaces[name];
+		if (s && s.captured)
+			return s;
+	}
+	return {};
+}
+function surfaceTileLayers(name) {
+	return Object.values(layers[name]).map(l => ["day", "night"].map(d => l[d]).filter(d => d)).flat();
+}
+function prettyName(name) {
+	return name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// players can put rich text like [item=iron-plate] in platform names
+function appendRichText(parent, text) {
+	const pattern = /\[([^=\]]+)=([^\]]+)\]/g;
+	let last = 0, match;
+	while ((match = pattern.exec(text)) !== null) {
+		if (match.index > last)
+			parent.appendChild(document.createTextNode(text.substring(last, match.index)));
+		const img = document.createElement("img");
+		img.className = "rich-text-icon";
+		img.src = "Images/labels/" + match[1] + "/" + match[2] + ".png";
+		img.alt = match[2];
+		img.onerror = function() { this.replaceWith(document.createTextNode(this.alt)); };
+		parent.appendChild(img);
+		last = pattern.lastIndex;
+	}
+	if (last < text.length)
+		parent.appendChild(document.createTextNode(text.substring(last)));
+	if (!parent.childNodes.length)
+		parent.appendChild(document.createTextNode(text));
+}
+
+const surfaceEntries = surfaceKeys.map(name => {
+	const meta = surfaceMeta(name);
+	return {
+		name: name,
+		kind: meta.kind || "other",
+		label: meta.label || name,
+		location: meta.location,
+		iconPath: meta.iconPath,
+		layers: surfaceTileLayers(name)
+	};
+});
+
+// one shared opacity group so both panels act as a single radio selection
+const surfaceSelectorID = globalID++;
+function applySurfaceSelection(selected) {
+	surfaceEntries.forEach(entry => {
+		const visible = entry.name === selected ? 1 : 0;
+		entry.layers.forEach(layer => {
+			if (!layer._opacities)
+				layer._opacities = {};
+			layer._opacities[surfaceSelectorID] = visible;
+			updateLayerOpacities(map, layer, false);
+		});
+	});
+}
+
+L.Control.surfacePanel = L.Control.extend({
+	options: { position: "topleft", title: "Surfaces", entries: [], onSelect: undefined },
+	onAdd: function (map) {
+		// same layer container patch the opacity controls install
+		if (!map._addLayer) {
+			map._addLayer = map.addLayer;
+			map.addLayer = function(layer) {
+				map._addLayer.call(this, layer);
+				if (layer._zcontainer)
+					$(layer._zcontainer).append(layer._container);
+			}
+		}
+
+		const _this = this;
+		const container = L.DomUtil.create("div", "surface-panel");
+		L.DomEvent.disableClickPropagation(container);
+		L.DomEvent.disableScrollPropagation(container);
+
+		const header = L.DomUtil.create("div", "surface-panel-header", container);
+		header.appendChild(document.createTextNode(this.options.title));
+		const count = L.DomUtil.create("span", "surface-panel-count", header);
+		count.appendChild(document.createTextNode(this.options.entries.length));
+
+		const list = L.DomUtil.create("div", "surface-panel-list", container);
+		this._buttons = {};
+
+		this.options.entries.forEach(entry => {
+			const item = L.DomUtil.create("button", "surface-item", list);
+			item.type = "button";
+
+			if (entry.iconPath) {
+				const icon = L.DomUtil.create("img", "surface-item-icon", item);
+				icon.src = entry.iconPath;
+				icon.alt = "";
+				icon.onerror = function() { this.style.visibility = "hidden"; };
+			} else
+				L.DomUtil.create("span", "surface-item-icon surface-item-icon-blank", item);
+
+			const text = L.DomUtil.create("span", "surface-item-text", item);
+			const label = L.DomUtil.create("span", "surface-item-label", text);
+			// planet labels are internal names, platform labels are player written
+			if (entry.kind === "planet")
+				label.appendChild(document.createTextNode(prettyName(entry.label)));
+			else
+				appendRichText(label, entry.label);
+			label.title = entry.label;
+			if (entry.location) {
+				const sub = L.DomUtil.create("span", "surface-item-sub", text);
+				sub.appendChild(document.createTextNode("at " + prettyName(entry.location)));
+			} else if (entry.label !== entry.name) {
+				const sub = L.DomUtil.create("span", "surface-item-sub", text);
+				sub.appendChild(document.createTextNode(entry.name));
+			}
+
+			L.DomEvent.on(item, "click", function() { _this.options.onSelect(entry.name); });
+			_this._buttons[entry.name] = item;
+		});
+
+		header.title = "Click to collapse";
+		L.DomEvent.on(header, "click", function() {
+			$(container).toggleClass("collapsed");
+		});
+
+		return container;
+	},
+	setSelected: function(name) {
+		for (const key in this._buttons)
+			$(this._buttons[key]).toggleClass("selected", key === name);
+	}
+});
+
+let surfacePanels = [];
+function selectSurface(name) {
+	if (name === currentSurface)
+		return;
+	currentSurface = name;
+	applySurfaceSelection(name);
+	surfacePanels.forEach(p => p.setSelected(name));
+	updateHash();
+	updateLabels();
+}
+
+if (surfaceEntries.length > 1) {
+	const planetEntries = surfaceEntries.filter(e => e.kind !== "platform");
+	const platformEntries = surfaceEntries.filter(e => e.kind === "platform");
+
+	function addPanel(title, entries, position) {
+		if (!entries.length)
+			return;
+		const panel = new L.Control.surfacePanel({
+			position: position,
+			title: title,
+			entries: entries,
+			onSelect: selectSurface
+		});
+		map.addControl(panel);
+		panel.setSelected(currentSurface);
+		surfacePanels.push(panel);
+	}
+
+	addPanel(planetEntries.some(e => e.kind === "planet") ? "Planets" : "Surfaces", planetEntries, "topleft");
+	addPanel("Platforms", platformEntries, "topright");
+
+	applySurfaceSelection(currentSurface);
 	mapLoadedBySlider = true;
-} else if (timeSlider)
+}
+if (timeSlider)
 	$(timeSlider._container).attr("style", "float: right !important");
 
 
@@ -643,6 +790,166 @@ if (!mapLoadedBySlider)
 	map.addLayer(loadLayer.day || loadLayer.night);
 map.addControl(new L.Control.FullScreen().setPosition('bottomright'));
 map.zoomControl.setPosition('bottomleft')
+
+
+// info panel: players, mods and credits
+function formatPlaytime(ticks) {
+	const hours = Math.floor(ticks / 60 / 60 / 60);
+	const minutes = Math.floor(ticks / 60 / 60) % 60;
+	return hours > 0 ? hours + "h " + minutes + "m" : minutes + "m";
+}
+
+// central european time, 24 hour clock, dd.mm.yyyy
+function formatEuropeanTime(isoString) {
+	const date = new Date(isoString);
+	if (isNaN(date))
+		return isoString;
+	const options = { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZoneName: "short" };
+	try {
+		return new Intl.DateTimeFormat("de-DE", options).format(date);
+	} catch (_) {
+		return date.toISOString().replace("T", " ").substr(0, 16) + " UTC";
+	}
+}
+
+L.Control.infoButton = L.Control.extend({
+	options: { position: "bottomleft" },
+	onAdd: function() {
+		const container = L.DomUtil.create("div", "leaflet-bar info-button");
+		// a button, not an anchor: an href="#" would trip the hash change reload
+		const btn = L.DomUtil.create("button", "", container);
+		btn.type = "button";
+		btn.title = "Map info, players, mods and credits";
+		btn.appendChild(document.createTextNode("i"));
+		L.DomEvent.disableClickPropagation(container);
+		L.DomEvent.on(btn, "click", function(e) {
+			L.DomEvent.preventDefault(e);
+			$("#info-modal").toggleClass("open");
+		});
+		return container;
+	}
+});
+map.addControl(new L.Control.infoButton());
+
+(function buildInfoModal() {
+	const info = mapInfo.info || {};
+	const overlay = document.createElement("div");
+	overlay.id = "info-modal";
+
+	const box = document.createElement("div");
+	box.className = "info-modal-box";
+	overlay.appendChild(box);
+
+	const close = document.createElement("button");
+	close.className = "info-modal-close";
+	close.type = "button";
+	close.appendChild(document.createTextNode("×"));
+	box.appendChild(close);
+
+	function section(title) {
+		const h = document.createElement("h2");
+		h.appendChild(document.createTextNode(title));
+		box.appendChild(h);
+		return h;
+	}
+	function definitionList(pairs) {
+		const dl = document.createElement("dl");
+		pairs.forEach(([term, value]) => {
+			const dt = document.createElement("dt");
+			dt.appendChild(document.createTextNode(term));
+			const dd = document.createElement("dd");
+			dd.appendChild(document.createTextNode(value));
+			dl.appendChild(dt);
+			dl.appendChild(dd);
+		});
+		box.appendChild(dl);
+		return dl;
+	}
+
+	const title = document.createElement("h1");
+	title.appendChild(document.createTextNode("Map info"));
+	box.appendChild(title);
+
+	const newest = mapInfo.maps[mapInfo.maps.length - 1];
+	const planetCount = surfaceEntries.filter(e => e.kind === "planet").length;
+	const platformCount = surfaceEntries.filter(e => e.kind === "platform").length;
+	const overview = [
+		["Snapshots", mapInfo.maps.length + (mapInfo.maps.length == 1 ? " (" + newest.path + "h)" : " (" + mapInfo.maps[0].path + "h – " + newest.path + "h)")],
+		["Captured surfaces", surfaceEntries.length + (platformCount ? " (" + planetCount + " planets, " + platformCount + " platforms)" : "")]
+	];
+	if (newest.date)
+		overview.push(["Newest snapshot", newest.date]);
+	if (info.mods && info.mods.base)
+		overview.push(["Factorio", info.mods.base]);
+	definitionList(overview);
+
+	if (info.players && info.players.length) {
+		section("Players (" + info.players.length + ")");
+		const ul = document.createElement("ul");
+		ul.className = "info-list";
+		info.players.slice().sort((a, b) => (b.online_time || 0) - (a.online_time || 0)).forEach(p => {
+			const li = document.createElement("li");
+			const name = document.createElement("span");
+			name.className = "info-name";
+			name.appendChild(document.createTextNode(p.name + (p.admin ? " ★" : "")));
+			li.appendChild(name);
+			if (p.online_time) {
+				const time = document.createElement("span");
+				time.className = "info-value";
+				time.appendChild(document.createTextNode(formatPlaytime(p.online_time)));
+				li.appendChild(time);
+			}
+			ul.appendChild(li);
+		});
+		box.appendChild(ul);
+	}
+
+	const mods = info.mods || newest.mods || {};
+	// base is shown as the factorio version, and factoriomaps is only enabled while capturing
+	const modNames = Object.keys(mods).filter(m => m !== "base" && m !== "L0laapk3_FactorioMaps").sort(naturalSort);
+	if (modNames.length) {
+		section("Mods (" + modNames.length + ")");
+		const ul = document.createElement("ul");
+		ul.className = "info-list info-scroll";
+		modNames.forEach(m => {
+			const li = document.createElement("li");
+			const name = document.createElement("span");
+			name.className = "info-name";
+			name.appendChild(document.createTextNode(m));
+			const version = document.createElement("span");
+			version.className = "info-value";
+			version.appendChild(document.createTextNode(mods[m]));
+			li.appendChild(name);
+			li.appendChild(version);
+			ul.appendChild(li);
+		});
+		box.appendChild(ul);
+	}
+
+	section("Credits");
+	const credits = document.createElement("p");
+	credits.className = "info-credits";
+	credits.innerHTML = 'Generated with <a href="https://github.com/L0laapk3/FactorioMaps" target="_blank" rel="noopener">FactorioMaps</a> by L0laapk3.<br>' +
+		'Factorio 2.1 port, mod overhaul and interface redesign by <strong>lordfiSh</strong> for Awesome Factorio Control Manager.<br>' +
+		'Map viewer built on <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>. ' +
+		'Images compressed with <a href="https://github.com/mozilla/mozjpeg" target="_blank" rel="noopener">mozjpeg</a>.<br>' +
+		'<a href="https://www.factorio.com/" target="_blank" rel="noopener">Factorio</a> is a game by Wube Software.';
+	box.appendChild(credits);
+
+	if (mapInfo.generatedAt) {
+		const generated = document.createElement("p");
+		generated.className = "info-generated";
+		generated.appendChild(document.createTextNode("Generated " + formatEuropeanTime(mapInfo.generatedAt)));
+		box.appendChild(generated);
+	}
+
+	document.body.appendChild(overlay);
+
+	function hide() { $(overlay).removeClass("open"); }
+	close.addEventListener("click", hide);
+	overlay.addEventListener("click", function(e) { if (e.target === overlay) hide(); });
+	document.addEventListener("keydown", function(e) { if (e.key === "Escape") hide(); });
+})();
 
 
 updateLabels();

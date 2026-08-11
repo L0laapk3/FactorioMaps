@@ -234,3 +234,262 @@ map-link::before {
 map-link:hover::before {
 	opacity: 1;
 }
+
+/* SURFACE PANELS */
+.surface-panel {
+	background: rgba(20, 32, 37, 0.92);
+	border: 1px solid rgba(255, 214, 106, 0.35);
+	border-radius: 6px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+	color: #e6ecef;
+	font-family: Verdana, Geneva, sans-serif;
+	font-size: 12px;
+	overflow: hidden;
+	max-width: 220px;
+	user-select: none;
+}
+
+.surface-panel-header {
+	padding: 7px 10px;
+	background: rgba(255, 214, 106, 0.12);
+	border-bottom: 1px solid rgba(255, 214, 106, 0.25);
+	color: #ffd66a;
+	font-weight: bold;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	font-size: 11px;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 10px;
+}
+
+.surface-panel-count {
+	background: rgba(255, 214, 106, 0.18);
+	border-radius: 8px;
+	padding: 1px 6px;
+	font-size: 10px;
+	color: #ffd66a;
+}
+
+.surface-panel-list {
+	max-height: min(60vh, 420px);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.surface-panel.collapsed .surface-panel-list {
+	display: none;
+}
+
+.surface-panel-list::-webkit-scrollbar {
+	width: 8px;
+}
+.surface-panel-list::-webkit-scrollbar-thumb {
+	background: rgba(255, 214, 106, 0.3);
+	border-radius: 4px;
+}
+
+.surface-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 5px 10px;
+	background: none;
+	border: none;
+	border-left: 3px solid transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.surface-item:hover {
+	background: rgba(255, 214, 106, 0.1);
+}
+
+.surface-item.selected {
+	background: rgba(255, 214, 106, 0.18);
+	border-left-color: #ffd66a;
+}
+
+.surface-item-icon {
+	width: 24px;
+	height: 24px;
+	flex: 0 0 24px;
+	object-fit: contain;
+	image-rendering: auto;
+}
+
+.surface-item-icon-blank {
+	display: inline-block;
+}
+
+.surface-item-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.surface-item-label {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.surface-item-sub {
+	font-size: 10px;
+	opacity: 0.6;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* INFO BUTTON AND MODAL */
+.info-button button {
+	display: block;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: none;
+	background: #fff;
+	color: #000;
+	cursor: pointer;
+	font-family: Georgia, "Times New Roman", serif;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 17px;
+	line-height: 30px;
+}
+
+.info-button button:hover {
+	background: #f4f4f4;
+}
+
+#info-modal {
+	display: none;
+	position: absolute;
+	inset: 0;
+	z-index: 1200;
+	background: rgba(0, 0, 0, 0.55);
+	align-items: center;
+	justify-content: center;
+	font-family: Verdana, Geneva, sans-serif;
+}
+
+#info-modal.open {
+	display: flex;
+}
+
+.info-modal-box {
+	position: relative;
+	background: rgb(27, 45, 51);
+	border: 1px solid rgba(255, 214, 106, 0.4);
+	border-radius: 8px;
+	box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+	color: #e6ecef;
+	padding: 22px 26px;
+	width: min(460px, 88vw);
+	max-height: 82vh;
+	overflow-y: auto;
+	font-size: 13px;
+}
+
+.info-modal-box h1 {
+	margin: 0 0 14px;
+	font-size: 19px;
+	color: #ffd66a;
+}
+
+.info-modal-box h2 {
+	margin: 20px 0 8px;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #ffd66a;
+	border-bottom: 1px solid rgba(255, 214, 106, 0.25);
+	padding-bottom: 4px;
+}
+
+.info-modal-box dl {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 14px;
+	margin: 0;
+}
+
+.info-modal-box dt {
+	opacity: 0.65;
+}
+
+.info-modal-box dd {
+	margin: 0;
+	text-align: right;
+}
+
+.info-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.info-list li {
+	display: flex;
+	justify-content: space-between;
+	gap: 14px;
+	padding: 3px 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.info-list .info-value {
+	opacity: 0.6;
+	white-space: nowrap;
+}
+
+.info-scroll {
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.info-credits {
+	margin: 0;
+	line-height: 1.6;
+	opacity: 0.8;
+}
+
+.info-credits a {
+	color: #ffd66a;
+}
+
+.info-modal-close {
+	position: absolute;
+	top: 10px;
+	right: 12px;
+	background: none;
+	border: none;
+	color: #e6ecef;
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0.6;
+}
+
+.info-modal-close:hover {
+	opacity: 1;
+}
+
+.info-generated {
+	margin: 14px 0 0;
+	font-size: 11px;
+	opacity: 0.45;
+	text-align: right;
+}
+
+.rich-text-icon {
+	height: 1.15em;
+	width: 1.15em;
+	object-fit: contain;
+	vertical-align: -0.2em;
+}
