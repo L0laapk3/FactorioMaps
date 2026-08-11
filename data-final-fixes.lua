@@ -75,6 +75,11 @@ for _, fluid in pairs(data.raw["fluid"]) do
 	index(fluid)
 end
 
+-- planet icons, used by the surface list in the web ui
+for _, planet in pairs(data.raw["planet"] or {}) do
+	index(planet, "planet")
+end
+
 
 
 

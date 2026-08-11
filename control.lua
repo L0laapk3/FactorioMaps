@@ -62,6 +62,22 @@ script.on_event(defines.events.on_tick, function(event)
 				fm.autorun.mapInfo.maps = {}
 			end
 		
+			-- refreshed every run so the info panel reflects the newest snapshot
+			local players = {}
+			for _, p in pairs(game.players) do
+				players[#players+1] = {
+					name = p.name,
+					online_time = p.online_time,
+					admin = p.admin,
+					force = p.force.name
+				}
+			end
+			fm.autorun.mapInfo.info = {
+				players = players,
+				mods = script.active_mods,
+				surfaceCount = #game.surfaces
+			}
+
 			fm.savename = fm.autorun.name or ""
 			fm.topfolder = fm.savename
 			fm.autorun.tick = game.tick

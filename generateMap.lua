@@ -496,6 +496,29 @@ function fm.generateMap(data)
 			links = fm.API.linkData[fm.currentSurface.name] or {}
 		}
 
+		-- describe the surface so the web ui can group and label it
+		local surfaceEntry = fm.autorun.mapInfo.maps[mapIndex].surfaces[fm.currentSurface.name]
+		surfaceEntry.kind = "other"
+		surfaceEntry.label = fm.currentSurface.name
+		if fm.currentSurface.platform then
+			surfaceEntry.kind = "platform"
+			surfaceEntry.label = fm.currentSurface.platform.name
+			surfaceEntry.iconType = "item"
+			surfaceEntry.iconName = "space-platform-hub"
+			local location = fm.currentSurface.platform.space_location
+			if location then
+				surfaceEntry.location = location.name
+			end
+		elseif fm.currentSurface.planet then
+			surfaceEntry.kind = "planet"
+			surfaceEntry.label = fm.currentSurface.planet.name
+			surfaceEntry.iconType = "planet"
+			surfaceEntry.iconName = fm.currentSurface.planet.name
+		end
+		if surfaceEntry.iconType then
+			surfaceEntry.iconPath = "Images/labels/" .. surfaceEntry.iconType .. "/" .. surfaceEntry.iconName .. ".png"
+		end
+
 		for _, s in pairs(fm.API.hiddenSurfaces) do
 			if s.name == fm.currentSurface.name then
 				fm.autorun.mapInfo.maps[mapIndex].surfaces[fm.currentSurface.name].hidden = true
