@@ -87,5 +87,12 @@
       "Improve image downscaling",
       "Fix issue involving renderboxes and unrendered surfaces",
       "Fix several issues with special characters in tags"
+    ],
+    "5.0.0": [
+      "!Updated for Factorio 2.1 (drops support for 1.1)",
+      "Screenshots now hide clouds and fog",
+      "Added macOS support (binary autodetection, system libturbojpeg)",
+      "Kill only the spawned factorio process instead of all instances",
+      "Replaced deprecated pkg_resources dependency check"
     ]
 }
