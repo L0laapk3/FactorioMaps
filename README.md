@@ -4,12 +4,18 @@ This [Factorio](http://www.factorio.com/) mod turns your factory into a timeline
 
 Mod portal link: https://mods.factorio.com/mod/L0laapk3_FactorioMaps
 
+# Factorio version support
+Version 5.0.0 and up target **Factorio 2.1** (Space Age surfaces work through the existing `--surface` flag). For Factorio 1.1, use the [4.4.0 release](https://github.com/L0laapk3/FactorioMaps/releases).
+
 # How to Install
 **Note that this program now only runs on 64 bit python version 3.6 or higher.**
 1. Download FactorioMaps to `%appdata%\mods\`, either from the [mod portal](https://mods.factorio.com/mod/L0laapk3_FactorioMaps) (The mod does not need to be enabled to work) and then unzipping it, or from [the github releases page](https://github.com/L0laapk3/FactorioMaps/releases).
 1. Install the latest version of [**64 bit** python **3**](https://www.python.org/downloads/).
 Make sure to do a select the "add python to PATH" and "install pip" options.
 1. Inside the factoriomaps folder, install the required pip packages: `python -m pip install --upgrade -r requirements.txt`.
+
+### macOS
+The steps above work the same (use `~/Library/Application Support/factorio/mods/` as the mods folder). Additionally, install the jpeg library once with [Homebrew](https://brew.sh): `brew install jpeg-turbo`. The factorio binary is found automatically for standalone (`/Applications/factorio.app`) and Steam installs.
 
 # How to Use
 1. Make sure you close factorio before starting the process.
